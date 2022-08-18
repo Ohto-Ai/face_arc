@@ -127,16 +127,16 @@ extern "C" {
 	* 在线激活接口
 	*******************************************************************************************/
 	MRESULT ASFOnlineActivation(
-		MPCChar				AppId,			// [in]  APPID	官网下载
-		MPCChar				SDKKey			// [in]  SDKKEY	官网下载
+		MPChar				AppId,			// [in]  APPID	官网下载
+		MPChar				SDKKey			// [in]  SDKKEY	官网下载
 		);
 
 	/*******************************************************************************************
 	* 在线激活接口，该接口与ASFOnlineActivation接口功能一致，推荐使用该接口
 	*******************************************************************************************/
 	MRESULT ASFActivation(
-		MPCChar				AppId,			// [in]  APPID	官网下载
-		MPCChar				SDKKey			// [in]  SDKKEY	官网下载
+		MPChar				AppId,			// [in]  APPID	官网下载
+		MPChar				SDKKey			// [in]  SDKKEY	官网下载
 		);
 
 	/************************************************************************

@@ -101,6 +101,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>inc; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libarcsoft_face_engine.lib; opencv_core249d.lib; opencv_highgui249d.lib; opencv_imgproc249d.lib</AdditionalDependencies>
@@ -114,6 +115,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>inc; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libarcsoft_face_engine.lib; opencv_core249.lib; opencv_highgui249.lib; opencv_imgproc249.lib</AdditionalDependencies>
@@ -127,6 +129,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>inc; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libarcsoft_face_engine.lib; opencv_core249d.lib; opencv_highgui249d.lib; opencv_imgproc249d.lib</AdditionalDependencies>
@@ -140,6 +143,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>inc; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libarcsoft_face_engine.lib; opencv_core249.lib; opencv_highgui249.lib; opencv_imgproc249.lib</AdditionalDependencies>
@@ -204,6 +208,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="samplecode.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArcSoftInterface.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
