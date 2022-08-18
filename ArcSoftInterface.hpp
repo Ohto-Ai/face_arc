@@ -101,7 +101,7 @@ namespace ohtoai
 			std::atomic_bool valid_{ false };
 			inline static std::atomic_bool onlineActived_{ false };
 		protected:
-			::MHandle engineHandle_;
+			::MHandle engineHandle_{};
 		};
 	}
 }
