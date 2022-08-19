@@ -9,8 +9,28 @@
 
 namespace ohtoai
 {
+
+	// Defines error
+	namespace error{
+		template <typename T = std::uint32_t, T SuccessCode = 0u>
+		struct ErrorCode: T{
+			operator bool() const{
+				return success();
+			}
+			bool success() const{
+				return *this == SuccessCode;
+			}
+			T code() const{
+				return *this;
+			}
+		};
+	}
+
+
 	namespace arc
 	{
+		using ArcErrorCode = error::ErrorCode<>;
+
 		struct FaceFeature: std::vector<std::uint8_t> {
 			using std::vector<std::uint8_t>::vector;
 		};
