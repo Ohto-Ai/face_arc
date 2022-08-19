@@ -13,16 +13,29 @@ namespace ohtoai
 	// Defines error
 	namespace error{
 		template <typename T = std::uint32_t, T SuccessCode = 0u>
-		struct ErrorCode: T{
+		struct ErrorCode{
+			ErrorCode() = default;
+			ErrorCode(const ErrorCode&) = default;
+			ErrorCode(ErrorCode&&) = default;
+			ErrorCode& operator =(const ErrorCode&) = default;
+			ErrorCode& operator =(ErrorCode&&) = default;
+			ErrorCode(const T& t)
+			{
+				code_ = t;
+			}
+			
 			operator bool() const{
 				return success();
 			}
 			bool success() const{
-				return *this == SuccessCode;
+				return code_ == SuccessCode;
 			}
 			T code() const{
-				return *this;
+				return code_;
 			}
+
+		protected:
+			T code_{ SuccessCode };
 		};
 	}
 
@@ -46,38 +59,49 @@ namespace ohtoai
 		{
 
 		public:
-			
+
 			std::optional<FaceFeature> faceFeatureExtractEx(LPASF_ImageData imageData, LPASF_SingleFaceInfo singleFaceInfo)
+			{
+				FaceFeature feature;
+				return faceFeatureExtractEx(feature, imageData, singleFaceInfo)
+					? std::make_optional(feature) : std::nullopt;
+			}
+
+			ArcErrorCode faceFeatureExtractEx(FaceFeature& feature, LPASF_ImageData imageData, LPASF_SingleFaceInfo singleFaceInfo)
 			{
 				::ASF_FaceFeature f_;
 				auto ret = ::ASFFaceFeatureExtractEx(engineHandle_, imageData, singleFaceInfo, &f_);
-				if (ret == MOK)
-					return FaceFeature(f_.feature, f_.feature + f_.featureSize);
-				else
-					return {};
+				feature = FaceFeature(f_.feature, f_.feature + f_.featureSize);
+				return ret;
 			}
 
-			std::optional<float> faceFeatureCompare(const FaceFeature&f1, const FaceFeature&f2, CompareModel model= CompareModel::ASF_LIFE_PHOTO)
+			std::optional<float> faceFeatureCompare(const FaceFeature& f1, const FaceFeature& f2, CompareModel model = CompareModel::ASF_LIFE_PHOTO)
 			{
 				float confidenceLevel{};
+				return faceFeatureCompare(confidenceLevel, f1, f2, model)
+					? std::make_optional(confidenceLevel) : std::nullopt;
+			}
+
+			ArcErrorCode faceFeatureCompare(float & confidenceLevel, const FaceFeature& f1, const FaceFeature& f2, CompareModel model = CompareModel::ASF_LIFE_PHOTO)
+			{
 				::ASF_FaceFeature af1{ const_cast<MByte*>(f1.data()), static_cast<MInt32>(f1.size()) };
 				::ASF_FaceFeature af2{ const_cast<MByte*>(f2.data()), static_cast<MInt32>(f2.size()) };
 				auto ret = ::ASFFaceFeatureCompare(engineHandle_, &af1, &af2, &confidenceLevel, model);
-				if (ret == MOK)
-					return confidenceLevel;
-				else
-					return {};
+				return ret;
 			}
 
 			
 		public:
 
-			bool static onlineActivation(std::string appId, std::string sdkKey) {
+			ArcErrorCode static onlineActivation(std::string appId, std::string sdkKey) {
 				auto ret = ::ASFOnlineActivation(const_cast<MPChar>(appId.c_str()), const_cast<MPChar>(sdkKey.c_str()));
-				return onlineActived_ = (ret == MOK || ret == MERR_ASF_ALREADY_ACTIVATED);
+				if (onlineActived_ = (ret == MOK || ret == MERR_ASF_ALREADY_ACTIVATED))
+					return {};
+				else
+					return  ret;
 			}
 
-			bool initEngine(DetectMode detectMode,
+			ArcErrorCode initEngine(DetectMode detectMode,
 				OrientPriority	detectFaceOrientPriority,
 				int				detectFaceScaleVal,
 				int				detectFaceMaxNum,
@@ -86,17 +110,17 @@ namespace ohtoai
 				auto ret = ::ASFInitEngine(detectMode, detectFaceOrientPriority
 					, detectFaceScaleVal, detectFaceMaxNum
 					, combinedMask, &engineHandle_);
-				return valid_ = (ret == MOK);
+				valid_ = (ret == MOK);
+				return ret;
 			}
 
-			bool uninitEngine()
+			ArcErrorCode uninitEngine()
 			{
 				if (valid_) {
 					valid_ = false;
-					auto ret = ::ASFUninitEngine(engineHandle_);
-					return ret == MOK;
+					return ::ASFUninitEngine(engineHandle_);
 				}
-				return true;
+				return {};
 			}
 			
 
