@@ -6,13 +6,14 @@
 #include <vector>
 #include <atomic>
 #include <optional>
+#include <initializer_list>
 
 namespace ohtoai
 {
 
 	// Defines error
 	namespace error{
-		template <typename T = std::uint32_t, T SuccessCode = 0u>
+		template <typename T, T ...SuccessCodes>
 		struct ErrorCode{
 			ErrorCode() = default;
 			ErrorCode(const ErrorCode&) = default;
@@ -23,26 +24,36 @@ namespace ohtoai
 			{
 				code_ = t;
 			}
-			
+
 			operator bool() const{
 				return success();
 			}
 			bool success() const{
-				return code_ == SuccessCode;
+				for (auto s : SuccessCodeList)
+				{
+					if (s == code_)
+						return true;
+				}
+				return false;
 			}
 			T code() const{
 				return code_;
 			}
 
 		protected:
-			T code_{ SuccessCode };
+			inline static std::vector<T> SuccessCodeList{ SuccessCodes ... };
+			T code_{};
 		};
 	}
 
 
 	namespace arc
 	{
-		using ArcErrorCode = error::ErrorCode<>;
+		using ArcErrorCode = error::ErrorCode<std::uint32_t, MOK, MERR_ASF_ALREADY_ACTIVATED>;
+
+		using Rect = MRECT;
+		using Point = MPOINT;
+
 
 		struct FaceFeature: std::vector<std::uint8_t> {
 			using std::vector<std::uint8_t>::vector;
@@ -51,7 +62,7 @@ namespace ohtoai
 		using OrientPriority = ASF_OrientPriority;
 		using DetectMode = ASF_DetectMode;
 		using CompareModel = ASF_CompareModel;
-		
+
 		/// <summary>
 		/// ArcSoft Face Engine
 		/// </summary>
@@ -90,15 +101,13 @@ namespace ohtoai
 				return ret;
 			}
 
-			
+
 		public:
 
 			ArcErrorCode static onlineActivation(std::string appId, std::string sdkKey) {
-				auto ret = ::ASFOnlineActivation(const_cast<MPChar>(appId.c_str()), const_cast<MPChar>(sdkKey.c_str()));
-				if (onlineActived_ = (ret == MOK || ret == MERR_ASF_ALREADY_ACTIVATED))
-					return {};
-				else
-					return  ret;
+				ArcErrorCode ret = ::ASFOnlineActivation(const_cast<MPChar>(appId.c_str()), const_cast<MPChar>(sdkKey.c_str()));
+				onlineActived_ = ret;
+				return  ret;
 			}
 
 			ArcErrorCode initEngine(DetectMode detectMode,
@@ -122,7 +131,7 @@ namespace ohtoai
 				}
 				return {};
 			}
-			
+
 
 			virtual ~ASFFaceEngine()
 			{
@@ -140,7 +149,7 @@ namespace ohtoai
 			{
 				return onlineActived_;
 			}
-			
+
 		protected:
 			std::atomic_bool valid_{ false };
 			inline static std::atomic_bool onlineActived_{ false };

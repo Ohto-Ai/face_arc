@@ -211,6 +211,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArcSoftInterface.hpp" />
+    <ClInclude Include="inc\amcomdef.h" />
+    <ClInclude Include="inc\arcsoft_face_sdk.h" />
+    <ClInclude Include="inc\asvloffscreen.h" />
+    <ClInclude Include="inc\merror.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

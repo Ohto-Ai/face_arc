@@ -21,6 +21,12 @@
       <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
       <Extensions>ts</Extensions>
     </Filter>
+    <Filter Include="arc">
+      <UniqueIdentifier>{03a60fd9-2461-4f09-a47e-9af72e8d9cdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{a2876dbb-3a2d-47f4-9cf3-986d59637ae8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="samplecode.cpp">
@@ -28,8 +34,20 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\amcomdef.h">
+      <Filter>arc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\arcsoft_face_sdk.h">
+      <Filter>arc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\asvloffscreen.h">
+      <Filter>arc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\merror.h">
+      <Filter>arc</Filter>
+    </ClInclude>
     <ClInclude Include="ArcSoftInterface.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>interface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
