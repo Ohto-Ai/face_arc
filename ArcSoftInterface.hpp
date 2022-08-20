@@ -20,10 +20,7 @@ namespace ohtoai
 			ErrorCode(ErrorCode&&) = default;
 			ErrorCode& operator =(const ErrorCode&) = default;
 			ErrorCode& operator =(ErrorCode&&) = default;
-			ErrorCode(const T& t)
-			{
-				code_ = t;
-			}
+			ErrorCode(const T& t) : code_{ t } {}
 
 			operator bool() const{
 				return success();
@@ -42,7 +39,7 @@ namespace ohtoai
 
 		protected:
 			inline static std::vector<T> SuccessCodeList{ SuccessCodes ... };
-			T code_{};
+			T code_{ SuccessCodeList.front() };
 		};
 	}
 

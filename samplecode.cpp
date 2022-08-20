@@ -32,12 +32,27 @@ void timestampToTime(char* timeStamp, char* dateTime, int dateTimeSize)
 
 int main()
 {
+
+	const ASF_VERSION version = ASFGetVersion();
+	printf("\nVersion:%s\n", version.Version);
+	printf("BuildDate:%s\n", version.BuildDate);
+	printf("CopyRight:%s\n", version.CopyRight);
+
+	printf("\n************* Face Recognition *****************\n");
+
 	MRESULT res = MOK;
 	ASF_ActiveFileInfo activeFileInfo = { 0 };
+
 	res = ASFGetActiveFileInfo(&activeFileInfo);
 	if (res != MOK)
 	{
 		printf("ASFGetActiveFileInfo fail: %d\n", res);
+
+		//激活接口,首次激活需联网
+		if (ohtoai::arc::ASFFaceEngine::onlineActivation(APPID, SDKKEY))
+			printf("ASFActivation sucess\n");
+		else
+			printf("ASFActivation fail\n");
 	}
 	else
 	{
@@ -49,28 +64,16 @@ int main()
 		printf("endTime: %s\n", endDateTime);
 	}
 
-	const ASF_VERSION version = ASFGetVersion();
-	printf("\nVersion:%s\n", version.Version);
-	printf("BuildDate:%s\n", version.BuildDate);
-	printf("CopyRight:%s\n", version.CopyRight);
-
-	printf("\n************* Face Recognition *****************\n");
-
-	//激活接口,首次激活需联网
-	if (ohtoai::arc::ASFFaceEngine::onlineActivation(APPID, SDKKEY))
-		printf("ASFActivation sucess\n");
-	else
-		printf("ASFActivation fail\n");
 
 	//初始化接口
 	ohtoai::arc::ASFFaceEngine engine;
 	MInt32 mask = ASF_FACE_DETECT | ASF_FACERECOGNITION | ASF_AGE | ASF_GENDER | ASF_FACE3DANGLE | 
 		ASF_LIVENESS | ASF_IR_LIVENESS;
 	
-	if (engine.initEngine(ASF_DETECT_MODE_IMAGE, ASF_OP_0_ONLY, 30, 5, mask))
+	if (auto ret = engine.initEngine(ASF_DETECT_MODE_IMAGE, ASF_OP_0_ONLY, 30, 5, mask))
 		printf("ASFInitEngine sucess\n");
 	else
-		printf("ASFInitEngine fail\n");
+		printf("ASFInitEngine fail %d\n", ret.code());
 
 	// 人脸检测
 	IplImage* img1 = cvLoadImage("RGB图像路径");
