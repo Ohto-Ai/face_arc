@@ -13,7 +13,6 @@ using namespace std;
 #define SDKKEY "7TdPs5daz29ZnSCmoUFZPsS8EkeS2KfreXwjVoBf54h5"
 #endif
 
-//裁剪图片
 void CutIplImage(IplImage* src, IplImage* dst, int x, int y)
 {
 	CvSize size = cvSize(dst->width, dst->height);//区域大小
@@ -22,55 +21,47 @@ void CutIplImage(IplImage* src, IplImage* dst, int x, int y)
 	cvResetImageROI(src);//源图像用完后，清空ROI
 }
 
-//时间戳转换为日期格式
-void timestampToTime(char* timeStamp, char* dateTime, int dateTimeSize)
-{
-	time_t tTimeStamp = atoll(timeStamp);
-	struct tm* pTm = gmtime(&tTimeStamp);
-	strftime(dateTime, dateTimeSize, "%Y-%m-%d %H:%M:%S", pTm);
-}
-
 int main()
 {
-
-	const ASF_VERSION version = ASFGetVersion();
-	printf("\nVersion:%s\n", version.Version);
-	printf("BuildDate:%s\n", version.BuildDate);
-	printf("CopyRight:%s\n", version.CopyRight);
+	auto version = ohtoai::arc::ArcFaceEngine::version();
+	printf("\nVersion:%s\n", version.Version.c_str());
+	printf("BuildDate:%s\n", version.BuildDate.c_str());
+	printf("CopyRight:%s\n", version.CopyRight.c_str());
 
 	printf("\n************* Face Recognition *****************\n");
 
 	MRESULT res = MOK;
-	ASF_ActiveFileInfo activeFileInfo = { 0 };
+	ohtoai::arc::ActiveFileInfo activeFileInfo{};
 
-	res = ASFGetActiveFileInfo(&activeFileInfo);
-	if (res != MOK)
+	if (auto res = ohtoai::arc::ArcFaceEngine::getActiveFileInfo(activeFileInfo); !res)
 	{
-		printf("ASFGetActiveFileInfo fail: %d\n", res);
+		printf("ASFGetActiveFileInfo fail: %d\n", res.code());
 
 		//激活接口,首次激活需联网
-		if (ohtoai::arc::ASFFaceEngine::onlineActivation(APPID, SDKKEY))
+		if (ohtoai::arc::ArcFaceEngine::onlineActivation(APPID, SDKKEY))
 			printf("ASFActivation sucess\n");
 		else
 			printf("ASFActivation fail\n");
 	}
 	else
 	{
-		char startDateTime[32];
-		timestampToTime(activeFileInfo.startTime, startDateTime, 32);
-		printf("startTime: %s\n", startDateTime);
-		char endDateTime[32];
-		timestampToTime(activeFileInfo.endTime, endDateTime, 32);
-		printf("endTime: %s\n", endDateTime);
+		char dateTime[32];
+		struct tm* pTm = gmtime(&activeFileInfo.startTime);
+
+		strftime(dateTime, 32, "%Y-%m-%d %H:%M:%S", pTm);
+		printf("startTime: %s\n", dateTime);
+		pTm = gmtime(&activeFileInfo.endTime);
+		strftime(dateTime, 32, "%Y-%m-%d %H:%M:%S", pTm);
+		printf("endTime: %s\n", dateTime);
 	}
 
 
 	//初始化接口
-	ohtoai::arc::ASFFaceEngine engine;
-	MInt32 mask = ASF_FACE_DETECT | ASF_FACERECOGNITION | ASF_AGE | ASF_GENDER | ASF_FACE3DANGLE | 
-		ASF_LIVENESS | ASF_IR_LIVENESS;
-	
-	if (auto ret = engine.initEngine(ASF_DETECT_MODE_IMAGE, ASF_OP_0_ONLY, 30, 5, mask))
+	ohtoai::arc::ArcFaceEngine engine;
+		
+	if (auto ret = engine.initEngine(ohtoai::arc::DetectMode::DetectModeImage
+		, ohtoai::arc::OrientPriority::OrientPriority0, 30, 5
+		, ohtoai::arc::ArcEngineMask::EngineMaskAge	| ohtoai::arc::ArcEngineMask::EngineMaskAge))
 		printf("ASFInitEngine sucess\n");
 	else
 		printf("ASFInitEngine fail %d\n", ret.code());
@@ -85,7 +76,7 @@ int main()
 		ASF_MultiFaceInfo detectedFaces1 = { 0 };
 		ASF_SingleFaceInfo SingleDetectedFaces1 = { 0 };
 		ohtoai::arc::FaceFeature feature{};
-		
+
 		IplImage* cutImg1 = cvCreateImage(cvSize(img1->width - img1->width % 4, img1->height), IPL_DEPTH_8U, img1->nChannels);
 		CutIplImage(img1, cutImg1, 0, 0);
 
