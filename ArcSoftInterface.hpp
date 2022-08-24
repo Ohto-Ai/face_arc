@@ -153,18 +153,15 @@ namespace ohtoai
 
 		struct MultiFaceInfo {
 			std::vector<Rect> faceRects;			//
-			std::vector<OrientCode> faceOrients;	//
+			std::vector<int> faceOrients;			//
 			std::vector<int> faceIDs;				//
 
 			OHTOAI_DECLARE_DEFAULT_CONSTRUCTOR(MultiFaceInfo);
 			MultiFaceInfo(const ASF_MultiFaceInfo& mfi)
 				: faceRects{ mfi.faceRect, mfi.faceRect + mfi.faceNum }
+				, faceOrients{ mfi.faceOrient , mfi.faceOrient + mfi.faceNum }
 				, faceIDs{ mfi.faceID, mfi.faceID + mfi.faceNum }
-			{
-				faceOrients.reserve(mfi.faceNum);
-				for (int i = 0; i < mfi.faceNum; ++i)
-					faceOrients.push_back(static_cast<OrientCode>(mfi.faceOrient[i]));
-			}
+			{}
 
 			size_t size() const { return faceRects.size(); }
 		};
@@ -272,38 +269,51 @@ namespace ohtoai
 				ASF_LivenessThreshold lt{ threshold.thresholdmodelBGR, threshold.thresholdmodelIR };
 				return ::ASFSetLivenessParam(engineHandle_, &lt);
 			}
-			MRESULT ASFProcess(
-				int				width,
-				int				height,
-				int				format,
-				std::byte* imgData,
-				LPASF_MultiFaceInfo	detectedFaces,
-				MInt32				combinedMask
-			);
 
-			MRESULT ASFProcessEx(
-				MHandle				hEngine,
-				LPASF_ImageData		imgData,
-				LPASF_MultiFaceInfo detectedFaces,
-				MInt32				combinedMask
-			);
 
-			MRESULT ASFProcess_IR(
-				MHandle				hEngine,
-				MInt32				width,
-				MInt32				height,
-				MInt32				format,
-				MUInt8* imgData,
-				LPASF_MultiFaceInfo	detectedFaces,
-				MInt32				combinedMask
-			);
+			ArcErrorCode process(int width, int height, int format, const std::uint8_t* imgData, const MultiFaceInfo& detectedFaces, ArcEngineMasks combinedMask)
+			{
+				ASF_MultiFaceInfo amf;
+				amf.faceOrient = const_cast<MInt32*>(detectedFaces.faceOrients.data());
+				amf.faceRect = const_cast<MRECT*>(static_cast<const MRECT*>(detectedFaces.faceRects.data()));
+				amf.faceID = const_cast<MInt32*>(detectedFaces.faceIDs.data());
+				amf.faceNum = detectedFaces.size();
 
-			MRESULT ASFProcessEx_IR(
-				MHandle				hEngine,
-				LPASF_ImageData		imgData,
-				LPASF_MultiFaceInfo detectedFaces,
-				MInt32				combinedMask
-			);
+				return ::ASFProcess(engineHandle_, width, height, format, const_cast<MUInt8*>(imgData), &amf, combinedMask);
+			}
+
+			ArcErrorCode processEx(LPASF_ImageData imgData, const MultiFaceInfo& detectedFaces, ArcEngineMasks combinedMask)
+			{
+				ASF_MultiFaceInfo amf;
+				amf.faceOrient = const_cast<MInt32*>(detectedFaces.faceOrients.data());
+				amf.faceRect = const_cast<MRECT*>(static_cast<const MRECT*>(detectedFaces.faceRects.data()));
+				amf.faceID = const_cast<MInt32*>(detectedFaces.faceIDs.data());
+				amf.faceNum = detectedFaces.size();
+
+				return ::ASFProcessEx(engineHandle_, imgData, &amf, combinedMask);
+			}
+
+			ArcErrorCode process_IR(int width, int height, int format, const std::uint8_t* imgData, const MultiFaceInfo& detectedFaces, ArcEngineMasks combinedMask)
+			{
+				ASF_MultiFaceInfo amf;
+				amf.faceOrient = const_cast<MInt32*>(detectedFaces.faceOrients.data());
+				amf.faceRect = const_cast<MRECT*>(static_cast<const MRECT*>(detectedFaces.faceRects.data()));
+				amf.faceID = const_cast<MInt32*>(detectedFaces.faceIDs.data());
+				amf.faceNum = detectedFaces.size();
+
+				return ::ASFProcess_IR(engineHandle_, width, height, format, const_cast<MUInt8*>(imgData), &amf, combinedMask);
+			}
+
+			ArcErrorCode ASFProcessEx_IR(LPASF_ImageData imgData, const MultiFaceInfo& detectedFaces, ArcEngineMasks combinedMask)
+			{
+				ASF_MultiFaceInfo amf;
+				amf.faceOrient = const_cast<MInt32*>(detectedFaces.faceOrients.data());
+				amf.faceRect = const_cast<MRECT*>(static_cast<const MRECT*>(detectedFaces.faceRects.data()));
+				amf.faceID = const_cast<MInt32*>(detectedFaces.faceIDs.data());
+				amf.faceNum = detectedFaces.size();
+
+				return ::ASFProcessEx_IR(engineHandle_, imgData, &amf, combinedMask);
+			}
 
 			std::optional<FaceFeature> faceFeatureExtractEx(LPASF_ImageData imageData, LPASF_SingleFaceInfo singleFaceInfo)
 			{
@@ -446,46 +456,35 @@ namespace ohtoai
 				return ret;
 			}
 
+			ArcErrorCode detectFaces(MultiFaceInfo& detectedFaces, int width, int height, int format, const std::uint8_t* imgData, DetectModel detectModel = DetectModel::DetectModelRGB)
+			{
+				ASF_MultiFaceInfo amf;
+				auto ret = ::ASFDetectFaces(engineHandle_, width, height, format, const_cast<MUInt8*>(imgData), &amf, static_cast<ASF_DetectModel>(detectModel));
+				detectedFaces = amf;
+				return ret;
+			}
 
-			MRESULT ASFGetActiveFileInfo(
-				LPASF_ActiveFileInfo  activeFileInfo
-			);
+			std::optional<MultiFaceInfo> detectFaces(int width, int height, int format, const std::uint8_t* imgData, DetectModel detectModel = DetectModel::DetectModelRGB)
+			{
+				MultiFaceInfo mfi{};
+				return detectFaces(mfi, width, height, format, imgData, detectModel)
+					? std::make_optional(mfi) : std::nullopt;
+			}
 
-			MRESULT ASFOnlineActivation(
-				MPChar				AppId,
-				MPChar				SDKKey
-			);
+			ArcErrorCode detectFacesEx(MultiFaceInfo& detectedFaces, LPASF_ImageData imgData, DetectModel detectModel = DetectModel::DetectModelRGB)
+			{
+				ASF_MultiFaceInfo amf;
+				auto ret = ::ASFDetectFacesEx(engineHandle_, imgData, &amf, static_cast<ASF_DetectModel>(detectModel));
+				detectedFaces = amf;
+				return ret;
+			}
 
-			MRESULT ASFActivation(
-				MPChar				AppId,
-				MPChar				SDKKey
-			);
-
-			MRESULT ASFInitEngine(
-				ASF_DetectMode		detectMode,
-				ASF_OrientPriority	detectFaceOrientPriority,
-				MInt32				detectFaceScaleVal,
-				MInt32				detectFaceMaxNum,
-				MInt32				combinedMask,
-				MHandle* hEngine
-			);
-
-			MRESULT ASFDetectFaces(
-				MHandle				hEngine,
-				MInt32				width,
-				MInt32				height,
-				MInt32				format,
-				MUInt8* imgData,
-				LPASF_MultiFaceInfo	detectedFaces,
-				ASF_DetectModel		detectModel = ASF_DETECT_MODEL_RGB
-			);
-
-			MRESULT ASFDetectFacesEx(
-				MHandle				hEngine,
-				LPASF_ImageData		imgData,
-				LPASF_MultiFaceInfo	detectedFaces,
-				ASF_DetectModel		detectModel = ASF_DETECT_MODEL_RGB
-			);
+			std::optional<MultiFaceInfo> detectFacesEx(LPASF_ImageData imgData, DetectModel detectModel = DetectModel::DetectModelRGB)
+			{
+				MultiFaceInfo mfi{};
+				return detectFacesEx(mfi, imgData, detectModel)
+					? std::make_optional(mfi) : std::nullopt;
+			}
 
 			ArcErrorCode uninitEngine()
 			{
