@@ -30,7 +30,6 @@ int main()
 
 	printf("\n************* Face Recognition *****************\n");
 
-	MRESULT res = MOK;
 	ohtoai::arc::ActiveFileInfo activeFileInfo{};
 
 	if (auto res = ohtoai::arc::ArcFaceEngine::getActiveFileInfo(activeFileInfo); !res)
@@ -73,7 +72,7 @@ int main()
 
 	if (img1 && img2 && img3)
 	{
-		ASF_MultiFaceInfo detectedFaces1 = { 0 };
+		ohtoai::arc::MultiFaceInfo detectedFaces1 {};
 		ASF_SingleFaceInfo SingleDetectedFaces1 = { 0 };
 		ohtoai::arc::FaceFeature feature{};
 
@@ -87,16 +86,9 @@ int main()
 		offscreen1.pi32Pitch[0] = cutImg1->widthStep;
 		offscreen1.ppu8Plane[0] = (MUInt8*)cutImg1->imageData;
 
-		res = ASFDetectFacesEx(engine.engineHandle(), &offscreen1, &detectedFaces1);
-		if (MOK == res && detectedFaces1.faceNum > 1)
+		if (auto res = engine.detectFacesEx(detectedFaces1 , &offscreen1); res && detectedFaces1.size() > 1)
 		{
-			SingleDetectedFaces1.faceRect.left = detectedFaces1.faceRect[0].left;
-			SingleDetectedFaces1.faceRect.top = detectedFaces1.faceRect[0].top;
-			SingleDetectedFaces1.faceRect.right = detectedFaces1.faceRect[0].right;
-			SingleDetectedFaces1.faceRect.bottom = detectedFaces1.faceRect[0].bottom;
-			SingleDetectedFaces1.faceOrient = detectedFaces1.faceOrient[0];
-
-			feature = engine.faceFeatureExtractEx(&offscreen1, &SingleDetectedFaces1).value();
+			feature = engine.faceFeatureExtractEx(&offscreen1, detectedFaces1.front()).value();
 			if (!feature.empty())
 			{
 				printf("ASFFaceFeatureExtract 1 success\n");
@@ -105,12 +97,11 @@ int main()
 				printf("ASFFaceFeatureExtract 1 fail\n");
 		}
 		else
-			printf("ASFDetectFaces 1 fail: %d\n", res);
+			printf("ASFDetectFaces 1 fail: %d\n", res.code());
 
 
 		//第二张人脸提取特征
-		ASF_MultiFaceInfo	detectedFaces2 = { 0 };
-		ASF_SingleFaceInfo SingleDetectedFaces2 = { 0 };
+		ohtoai::arc::MultiFaceInfo	detectedFaces2 {};
 		ohtoai::arc::FaceFeature feature2{};
 		IplImage* cutImg2 = cvCreateImage(cvSize(img2->width - img2->width % 4, img2->height), IPL_DEPTH_8U, img2->nChannels);
 		CutIplImage(img2, cutImg2, 0, 0);
@@ -122,16 +113,9 @@ int main()
 		offscreen2.pi32Pitch[0] = cutImg2->widthStep;
 		offscreen2.ppu8Plane[0] = (MUInt8*)cutImg2->imageData;
 
-		res = ASFDetectFacesEx(engine.engineHandle(), &offscreen2, &detectedFaces2);
-		if (MOK == res && detectedFaces2.faceNum > 1)
+		if (auto res = engine.detectFacesEx(detectedFaces2, &offscreen2); res && detectedFaces2.size() > 1)
 		{
-			SingleDetectedFaces2.faceRect.left = detectedFaces2.faceRect[0].left;
-			SingleDetectedFaces2.faceRect.top = detectedFaces2.faceRect[0].top;
-			SingleDetectedFaces2.faceRect.right = detectedFaces2.faceRect[0].right;
-			SingleDetectedFaces2.faceRect.bottom = detectedFaces2.faceRect[0].bottom;
-			SingleDetectedFaces2.faceOrient = detectedFaces2.faceOrient[0];
-
-			feature2 = engine.faceFeatureExtractEx(&offscreen2, &SingleDetectedFaces2).value();
+			feature2 = engine.faceFeatureExtractEx(&offscreen2, detectedFaces2[0]).value();
 			if (feature2.empty())
 				printf("ASFFaceFeatureExtractEx 2 fail\n");
 		}
@@ -145,44 +129,42 @@ int main()
 		printf("ASFFaceFeatureCompare sucess: %lf\n", confidenceLevel);
 
 		//设置活体置信度 SDK内部默认值为 IR：0.7  RGB：0.5（无特殊需要，可以不设置）
-		ASF_LivenessThreshold threshold = { 0 };
-		threshold.thresholdmodel_BGR = 0.5;
-		threshold.thresholdmodel_IR = 0.7;
-		res = ASFSetLivenessParam(engine.engineHandle(), &threshold);
-		if (res != MOK)
-			printf("ASFSetLivenessParam fail: %d\n", res);
+		ohtoai::arc::LivenessThreshold threshold{};
+		threshold.thresholdmodelBGR = 0.5;
+		threshold.thresholdmodelIR = 0.7;
+
+		if (auto res = engine.setLivenessParam(threshold))
+			printf("RGB Threshold: %f  IR Threshold: %f\n", threshold.thresholdmodelBGR, threshold.thresholdmodelIR);
 		else
-			printf("RGB Threshold: %f  IR Threshold: %f\n", threshold.thresholdmodel_BGR, threshold.thresholdmodel_IR);
+			printf("ASFSetLivenessParam fail: %d\n", res.code());
 
 		printf("\n*************** RGB Process ***************\n");
 
 		// RGB图像检测
-		MInt32 processMask = ASF_AGE | ASF_GENDER | ASF_FACE3DANGLE | ASF_LIVENESS;
-		res = ASFProcessEx(engine.engineHandle(), &offscreen2, &detectedFaces2, processMask);
-		if (res != MOK)
-			printf("ASFSProcessEx fail: %d\n", res);
+		auto processMask = ohtoai::arc::EngineMaskAge | ohtoai::arc::EngineMaskGender
+			| ohtoai::arc::EngineMaskFace3DAngle | ohtoai::arc::EngineMaskLiveness;
+		if (auto res = engine.processEx(&offscreen2, detectedFaces2, processMask))
+			printf("ASFProcessEx sucess: %d\n", res.code());
 		else
-			printf("ASFProcessEx sucess: %d\n", res);
+			printf("ASFSProcessEx fail: %d\n", res.code());
 
 		// 获取年龄
-		ASF_AgeInfo ageInfo = { 0 };
-		res = ASFGetAge(engine.engineHandle(), &ageInfo);
-		if (res != MOK)
-			printf("ASFGetAge fail: %d\n", res);
+		ohtoai::arc::AgeInfo ageInfo{};
+		if (auto res = engine.getAge(ageInfo))
+			printf("Age: %d\n", ageInfo.front());
 		else
-			printf("Age: %d\n", ageInfo.ageArray[0]);
+			printf("ASFGetAge fail: %d\n", res);
 
 		// 获取性别
-		ASF_GenderInfo genderInfo = { 0 };
-		res = ASFGetGender(engine.engineHandle(), &genderInfo);
-		if (res != MOK)
-			printf("ASFGetGender fail: %d\n", res);
+		ohtoai::arc::GenderInfo genderInfo{};
+		if (auto res = engine.getGender(genderInfo))
+			printf("Gender: %d\n", genderInfo.front());
 		else
-			printf("Gender: %d\n", genderInfo.genderArray[0]);
+			printf("ASFGetGender fail: %d\n", res);
 
 		// 获取3D角度
 		ASF_Face3DAngle angleInfo = { 0 };
-		res = ASFGetFace3DAngle(engine.engineHandle(), &angleInfo);
+		MRESULT res = ASFGetFace3DAngle(engine.engineHandle(), &angleInfo);
 		if (res != MOK)
 			printf("ASFGetFace3DAngle fail: %d\n", res);
 		else

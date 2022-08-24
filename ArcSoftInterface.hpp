@@ -148,7 +148,6 @@ namespace ohtoai
 				: faceRect{ sfi.faceRect }
 				, faceOrient{ static_cast<OrientCode>(sfi.faceOrient) }
 			{}
-
 		};
 
 		struct MultiFaceInfo {
@@ -162,6 +161,26 @@ namespace ohtoai
 				, faceOrients{ mfi.faceOrient , mfi.faceOrient + mfi.faceNum }
 				, faceIDs{ mfi.faceID, mfi.faceID + mfi.faceNum }
 			{}
+
+			SingleFaceInfo at(size_t idx) const
+			{
+				return { { faceRects.at(idx), faceOrients.at(idx)}};
+			}
+
+			SingleFaceInfo operator [](size_t idx) const
+			{
+				return { { faceRects[idx], faceOrients[idx]} };
+			}
+
+			SingleFaceInfo front() const
+			{
+				return { { faceRects.front(), faceOrients.front()} };
+			}
+
+			SingleFaceInfo back() const
+			{
+				return { { faceRects.back(), faceOrients.back()} };
+			}
 
 			size_t size() const { return faceRects.size(); }
 		};
@@ -315,17 +334,18 @@ namespace ohtoai
 				return ::ASFProcessEx_IR(engineHandle_, imgData, &amf, combinedMask);
 			}
 
-			std::optional<FaceFeature> faceFeatureExtractEx(LPASF_ImageData imageData, LPASF_SingleFaceInfo singleFaceInfo)
+			std::optional<FaceFeature> faceFeatureExtractEx(LPASF_ImageData imageData, const SingleFaceInfo& singleFaceInfo)
 			{
 				FaceFeature feature;
 				return faceFeatureExtractEx(feature, imageData, singleFaceInfo)
 					? std::make_optional(feature) : std::nullopt;
 			}
 
-			ArcErrorCode faceFeatureExtractEx(FaceFeature& feature, LPASF_ImageData imageData, LPASF_SingleFaceInfo singleFaceInfo)
+			ArcErrorCode faceFeatureExtractEx(FaceFeature& feature, LPASF_ImageData imageData, const SingleFaceInfo& singleFaceInfo)
 			{
 				::ASF_FaceFeature f_;
-				auto ret = ::ASFFaceFeatureExtractEx(engineHandle_, imageData, singleFaceInfo, &f_);
+				ASF_SingleFaceInfo asf{ singleFaceInfo.faceRect,  singleFaceInfo.faceOrient };
+				auto ret = ::ASFFaceFeatureExtractEx(engineHandle_, imageData, &asf, &f_);
 				feature = FaceFeature(f_.feature, f_.feature + f_.featureSize);
 				return ret;
 			}
