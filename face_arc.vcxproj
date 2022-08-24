@@ -108,7 +108,7 @@
       <AdditionalLibraryDirectories>lib\$(PlatformTarget); %(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+      <Command>echo No | copy /-Y lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
       <Message>复制运行时</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -122,7 +122,7 @@
       <AdditionalLibraryDirectories>lib\$(PlatformTarget); %(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+      <Command>echo No | copy /-Y lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
       <Message>复制运行时</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -136,7 +136,7 @@
       <AdditionalLibraryDirectories>lib\$(PlatformTarget); %(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+      <Command>echo No | copy /-Y lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
       <Message>复制运行时</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -150,7 +150,7 @@
       <AdditionalLibraryDirectories>lib\$(PlatformTarget); %(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+      <Command>echo No | copy /-Y lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
       <Message>复制运行时</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -211,6 +211,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArcSoftInterface.hpp" />
+    <ClInclude Include="inc\amcomdef.h" />
+    <ClInclude Include="inc\arcsoft_face_sdk.h" />
+    <ClInclude Include="inc\asvloffscreen.h" />
+    <ClInclude Include="inc\merror.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
